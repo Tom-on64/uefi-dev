@@ -13,4 +13,5 @@ $(TARGET): $(SRC)/$(TARGET).c
 
 clean:
 	rm -f $(TARGET)
+	rm -f **.img
 
