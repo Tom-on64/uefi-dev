@@ -10,7 +10,7 @@ typedef uint_least16_t char16_t;
 #define LBA_SIZE    512
 #define ESP_SIZE    (33*MEGABYTE)
 #define DATA_SIZE   (MEGABYTE)
-#define IMG_SIZE    (ESP_SIZE + DATA_SIZE + (MEGABYTE*2 + (LBA_SIZE * 67)))
+#define IMG_SIZE    (ESP_SIZE + DATA_SIZE + (MEGABYTE*2 + (LBA_SIZE * (BYTES2LBAS(GPT_TABLE_SIZE) * 2 + 3))))
 
 #define ALIGN_LBA   (MEGABYTE / LBA_SIZE)
 
@@ -83,6 +83,74 @@ typedef struct {
     uint64_t attributes;
     char16_t name[36];  // UTF-16 For some reason
 } __attribute__ ((packed)) GptPartitionEntry;
+
+typedef struct {
+    uint8_t     BS_jmpBoot[3];
+    uint8_t     BS_OEMName[8];
+    uint16_t    BPB_BytesPerSec;
+    uint8_t     BPB_SecPerClus;
+    uint16_t    BPB_RsvdSecCnt;
+    uint8_t     BPB_NumFATs;
+    uint16_t    BPB_RootEntCnt;
+    uint16_t    BPB_TotSec16;
+    uint8_t     BPB_Media;
+    uint16_t    BPB_FATSz16;
+    uint16_t    BPB_SecPerTrk;
+    uint16_t    BPB_NumHeads;
+    uint32_t    BPB_HiddSec;
+    uint32_t    BPB_TotSec32;
+    uint32_t    BPB_FATSz32;
+    uint16_t    BPB_ExtFlags;
+    uint16_t    BPB_FSVer;
+    uint32_t    BPB_RootClus;
+    uint16_t    BPB_FSInfo;
+    uint16_t    BPB_BkBootSec;
+    uint8_t     BPB_Reserved[12];
+    uint8_t     BS_DrvNum;
+    uint8_t     BS_Reserved1;
+    uint8_t     BS_BootSig;
+    uint8_t     BS_VolID[4];
+    uint8_t     BS_VolLab[11];
+    uint8_t     BS_FilSysType[8];
+
+    uint8_t     bootCode[510-90];
+    uint16_t    bootsectSig;    // 0xaa55
+} __attribute__ ((packed)) VolumeBootRecord;
+
+typedef struct {
+    uint32_t    FSI_LeadSig;
+    uint8_t     FSI_Reserved1[480];
+    uint32_t    FSI_StructSig;
+    uint32_t    FSI_FreeCount;
+    uint32_t    FSI_NextFree;
+    uint8_t     FSI_Reserved2[12];
+    uint32_t    FSI_TrailSig;
+} __attribute__ ((packed)) FSInfo;
+
+typedef struct {
+    uint8_t     DIR_Name[11];
+    uint8_t     DIR_Attr;
+    uint8_t     DIR_NTRes;
+    uint8_t     DIR_CrtTimeTenth;
+    uint16_t    DIR_CrtTime;
+    uint16_t    DIR_CrtDate;
+    uint16_t    DIR_LstAccDate;
+    uint16_t    DIR_FstClusHi;
+    uint16_t    DIR_WrtTime;
+    uint16_t    DIR_WrtDate;
+    uint16_t    DIR_FstClusLo;
+    uint32_t    DIR_FileSize;
+} __attribute__ ((packed)) FAT32_DirEntryShort;
+
+typedef enum {
+    ATTR_READ_ONLY  = 1 << 0,
+    ATTR_HIDDEN     = 1 << 1,
+    ATTR_SYSTEM     = 1 << 2,
+    ATTR_VOLUME_ID  = 1 << 3,
+    ATTR_DIRECTORY  = 1 << 4,
+    ATTR_ARCHIVE    = 1 << 5,
+    ATTR_LONG_NAME  = ATTR_READ_ONLY | ATTR_HIDDEN | ATTR_SYSTEM | ATTR_VOLUME_ID,
+} FAT32_DirAttr;
 
 #endif
 
